@@ -1,0 +1,9 @@
+node_modules/
+uploads/
+*.log
+data.json
+users.json
+sessions.json
+view_history.json
+notifications.json
+.DS_Store
