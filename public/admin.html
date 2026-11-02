@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>审核后台 · 光影集</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .admin-wrap{max-width:1100px;margin:0 auto;padding:40px 32px 80px;position:relative;z-index:1}
+  .login-card{max-width:400px;margin:120px auto;background:var(--panel);
+    border:1px solid var(--line);border-radius:20px;padding:36px;box-shadow:var(--shadow)}
+  .login-card h2{font-family:Georgia,serif;margin-bottom:8px;font-size:22px}
+  .login-card p{font-size:13px;color:var(--muted);margin-bottom:22px}
+  .admin-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;flex-wrap:wrap;gap:16px}
+  .admin-head h1{font-family:Georgia,serif;font-size:26px;letter-spacing:.06em}
+  .admin-head-actions{display:flex;gap:10px;align-items:center}
+  .stats{display:flex;gap:22px;font-size:13px;color:var(--muted)}
+  .stats b{color:var(--accent);font-size:16px;margin-left:6px}
+  .batch-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;
+    background:rgba(224,164,88,.06);border:1px solid rgba(224,164,88,.2);
+    border-radius:12px;margin-bottom:16px;flex-wrap:wrap}
+  .batch-bar[hidden]{display:none}
+  .batch-bar .info{font-size:13px;color:var(--accent-2);margin-right:auto}
+  .batch-bar .info b{font-size:15px}
+  .batch-bar button{padding:8px 16px;border-radius:999px;border:1px solid var(--line);
+    background:transparent;color:var(--text);font-size:13px;cursor:pointer;transition:.2s;font-family:inherit}
+  .batch-bar button:hover{background:rgba(255,255,255,.07)}
+  .batch-bar button.ok{border-color:rgba(120,200,140,.5);color:#7ec896}
+  .batch-bar button.ok:hover{background:rgba(120,200,140,.12)}
+  .batch-bar button.no{border-color:rgba(224,112,112,.5);color:#e07070}
+  .batch-bar button.no:hover{background:rgba(224,112,112,.12)}
+  .batch-bar button:disabled{opacity:.4;cursor:not-allowed}
+  .export-btn{padding:10px 18px;border-radius:999px;border:1px solid rgba(120,200,140,.4);
+    background:rgba(120,200,140,.08);color:#7ec896;font-size:13px;cursor:pointer;transition:.2s;font-family:inherit}
+  .export-btn:hover{background:rgba(120,200,140,.16)}
+  .review-item{display:flex;gap:14px;align-items:flex-start;padding:16px;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-bottom:14px}
+  .review-item.selected{border-color:rgba(224,164,88,.5);background:rgba(224,164,88,.05)}
+  .review-checkbox{margin-top:6px;width:18px;height:18px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+  .review-thumb{width:110px;height:82px;flex-shrink:0;border-radius:9px;overflow:hidden;background:#000;
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .review-thumb img,.review-thumb video{width:100%;height:100%;object-fit:cover}
+  .review-thumb .thumb-count{
+    position:absolute;right:5px;bottom:5px;padding:2px 7px;border-radius:999px;
+    background:rgba(0,0,0,.65);color:#fff;font-size:10.5px;letter-spacing:.03em;
+  }
+  .review-body{flex:1;min-width:0}
+  .review-body h3{font-size:15px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .review-body p{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .review-body .tag-user{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:6px;
+    background:rgba(90,140,220,.12);color:#8ab4e8;font-size:11.5px;border:1px solid rgba(90,140,220,.25)}
+  .review-body .tag-cat{display:inline-block;margin-left:6px;margin-top:6px;padding:2px 10px;border-radius:999px;
+    background:rgba(224,164,88,.12);color:var(--accent-2);font-size:11px;letter-spacing:.04em}
+  .review-body .tag-rev{display:inline-block;margin-left:6px;margin-top:6px;padding:2px 10px;border-radius:6px;
+    background:rgba(180,180,220,.1);color:#a8a8d8;font-size:11px;border:1px solid rgba(180,180,220,.2)}
+  .review-body .reject-line{margin-top:8px;font-size:12.5px;color:#c97878;line-height:1.6;
+    padding:8px 11px;border-radius:7px;
+    background:rgba(224,112,112,.07);border:1px solid rgba(224,112,112,.2)}
+  .review-body .history-line{margin-top:8px;font-size:11.5px;color:var(--muted);line-height:1.7}
+  .review-body .history-line span{display:inline-block;margin-right:10px}
+  .review-actions{display:flex;gap:8px;flex-shrink:0;align-self:center}
+  .btn-sm{padding:8px 16px;font-size:13px;border-radius:999px;border:1px solid var(--line);
+    background:transparent;color:var(--text);cursor:pointer;transition:.2s;font-family:inherit}
+  .btn-sm:hover{background:rgba(255,255,255,.07)}
+  .btn-sm.ok{border-color:rgba(120,200,140,.5);color:#7ec896}
+  .btn-sm.ok:hover{background:rgba(120,200,140,.12)}
+  .btn-sm.no{border-color:rgba(224,112,112,.5);color:#e07070}
+  .btn-sm.no:hover{background:rgba(224,112,112,.12)}
+  .btn-sm.del{border-color:rgba(220,60,60,.6);color:#e04a4a}
+  .btn-sm.del:hover{background:rgba(220,60,60,.15)}
+  .empty-admin{text-align:center;color:var(--muted);padding:60px 0}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<header class="topbar">
+  <a class="brand" href="/">光<span>影</span>集</a>
+  <nav class="nav">
+    <a href="/">返回前台</a>
+    <button class="btn ghost" id="logoutBtn" hidden>退出</button>
+  </nav>
+</header>
+
+<div id="loginView">
+  <div class="login-card">
+    <h2>审核后台</h2>
+    <p>请输入管理密码以查看待审核作品</p>
+    <div class="field"><input type="password" id="pwdInput" placeholder="管理密码" autocomplete="current-password"></div>
+    <p class="msg err" id="loginMsg"></p>
+    <button class="btn primary" id="loginBtn" style="width:100%;margin-top:8px">登录</button>
+  </div>
+</div>
+
+<div id="dashView" class="admin-wrap" hidden>
+  <div class="admin-head">
+    <h1>作品审核</h1>
+    <div class="admin-head-actions">
+      <div class="stats" id="stats"></div>
+      <button class="export-btn" id="exportBtn">⬇ 导出 CSV</button>
+    </div>
+  </div>
+  <div class="tabs" id="adminTabs" style="margin-bottom:16px;display:inline-flex">
+    <button class="tab active" data-status="pending">待审核</button>
+    <button class="tab" data-status="approved">已通过</button>
+    <button class="tab" data-status="rejected">已拒绝</button>
+  </div>
+  <div class="batch-bar" id="batchBar" hidden>
+    <div class="info">已选 <b id="batchCount">0</b> 项</div>
+    <button class="ok" id="batchApprove" disabled>批量通过</button>
+    <button class="no" id="batchReject" disabled>批量拒绝</button>
+    <button id="batchClear">取消选择</button>
+  </div>
+  <div id="list"></div>
+</div>
+
+<div class="modal" id="rejectModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:460px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2 id="rejectTitle">拒绝该作品</h2>
+    <p class="sub" id="rejectSub">请填写拒绝原因，上传者可在「我的投稿」中看到这个原因。</p>
+    <div class="field"><label>拒绝原因（必填）</label><textarea id="rejectReason" maxlength="300" rows="4" placeholder="例：图片模糊、与摄影无关、内容不当……"></textarea></div>
+    <p class="msg err" id="rejectErr"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" id="rejectCancel">取消</button>
+      <button type="button" class="btn primary" id="rejectConfirm" style="background:linear-gradient(135deg,#e07070,#c04040);color:#fff">确认拒绝</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const CATEGORY_LABELS = { landscape:'风光', portrait:'人像', street:'街拍', still:'静物', animal:'动物', architecture:'建筑', documentary:'纪实', other:'其他' };
+  let token = sessionStorage.getItem('adminToken') || '';
+  let currentStatus = 'pending';
+  let currentItems = [];
+  let selectedIds = new Set();
+  let pendingRejectIds = [];
+  let isBatchReject = false;
+
+  const api = (url, opts = {}) => fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', 'x-admin-token': token, ...(opts.headers || {}) } });
+
+  function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+  function renderTagList(tags) { if (!Array.isArray(tags) || !tags.length) return ''; return tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join(''); }
+  function renderCatLabels(cats) {
+    const arr = Array.isArray(cats) ? cats : (cats ? [cats] : []);
+    return arr.map(c => CATEGORY_LABELS[c] || '其他').join(' / ');
+  }
+  function coverOf(item) {
+    if (Array.isArray(item.images) && item.images.length) return item.images[0];
+    return item.url || item.cover || '';
+  }
+  function imageCount(item) {
+    if (Array.isArray(item.images)) return item.images.length;
+    return item.url ? 1 : 0;
+  }
+
+  function showLogin() { $('#loginView').hidden = false; $('#dashView').hidden = true; $('#logoutBtn').hidden = true; }
+  function showDash() { $('#loginView').hidden = true; $('#dashView').hidden = false; $('#logoutBtn').hidden = false; loadList(); }
+
+  async function login() {
+    const pwd = $('#pwdInput').value.trim();
+    if (!pwd) return;
+    $('#loginMsg').textContent = '';
+    try {
+      const res = await fetch('/api/admin/items?status=pending', { headers: { 'x-admin-token': pwd } });
+      if (res.ok) { token = pwd; sessionStorage.setItem('adminToken', pwd); showDash(); }
+      else $('#loginMsg').textContent = '密码错误';
+    } catch { $('#loginMsg').textContent = '连接失败'; }
+  }
+  $('#loginBtn').addEventListener('click', login);
+  $('#pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  $('#logoutBtn').addEventListener('click', () => { token = ''; sessionStorage.removeItem('adminToken'); showLogin(); });
+
+  $('#adminTabs').addEventListener('click', e => {
+    const t = e.target.closest('.tab'); if (!t) return;
+    document.querySelectorAll('#adminTabs .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active'); currentStatus = t.dataset.status; selectedIds.clear(); loadList();
+  });
+
+  $('#exportBtn').addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/admin/export.csv', { headers: { 'x-admin-token': token } });
+      if (!res.ok) throw new Error('导出失败');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `gallery-export-${Date.now()}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    } catch (e) { alert('导出失败：' + e.message); }
+  });
+
+  async function loadList() {
+    $('#list').innerHTML = '<p class="empty-admin">加载中…</p>';
+    try {
+      const res = await api('/api/admin/items?status=' + currentStatus);
+      if (res.status === 401) { showLogin(); return; }
+      const data = await res.json();
+      const c = data.counts || {};
+      $('#stats').innerHTML = `<span>待审核<b>${c.pending||0}</b></span><span>已通过<b>${c.approved||0}</b></span><span>已拒绝<b>${c.rejected||0}</b></span>`;
+      currentItems = data.items || []; renderList();
+    } catch { $('#list').innerHTML = '<p class="empty-admin">加载失败</p>'; }
+  }
+
+  function renderList() {
+    const listEl = $('#list');
+    listEl.innerHTML = '';
+    if (!currentItems.length) { listEl.innerHTML = '<p class="empty-admin">暂无作品</p>'; updateBatchBar(); return; }
+    currentItems.forEach(item => listEl.appendChild(createReviewItem(item)));
+    updateBatchBar();
+  }
+
+  function createReviewItem(item) {
+    const el = document.createElement('div');
+    el.className = 'review-item' + (selectedIds.has(item.id) ? ' selected' : '');
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'review-checkbox'; cb.checked = selectedIds.has(item.id);
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedIds.add(item.id); else selectedIds.delete(item.id);
+      el.classList.toggle('selected', cb.checked); updateBatchBar();
+    });
+
+    const thumb = document.createElement('div'); thumb.className = 'review-thumb';
+    const cover = coverOf(item);
+    const cnt = imageCount(item);
+    if (item.type === 'video') {
+      const v = document.createElement('video');
+      v.src = cover; v.muted = true; v.playsInline = true; v.preload = 'metadata';
+      thumb.appendChild(v);
+    } else {
+      const img = document.createElement('img');
+      img.src = cover; img.loading = 'lazy'; img.decoding = 'async'; img.alt = item.title;
+      thumb.appendChild(img);
+      if (cnt > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'thumb-count'; badge.textContent = cnt + ' 张';
+        thumb.appendChild(badge);
+      }
+    }
+
+    const body = document.createElement('div'); body.className = 'review-body';
+    const userTag = item.username ? `<span class="tag-user">👤 ${escapeHtml(item.username)}</span>` : `<span class="tag-user" style="background:rgba(150,150,150,.12);color:#aaa">老数据</span>`;
+    const catText = renderCatLabels(item.category);
+    const catTag = catText ? `<span class="tag-cat">${escapeHtml(catText)}</span>` : '';
+    const revTag = item.revision > 1 ? `<span class="tag-rev">v${item.revision}</span>` : '';
+
+    let historyHtml = '';
+    if (Array.isArray(item.history) && item.history.length > 1) {
+      const items = item.history.map(h => {
+        const act = { submit: '提交', resubmit: '重新提交', approve: '通过', reject: '拒绝' }[h.action] || h.action;
+        return `<span>${act} · ${new Date(h.at).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })}</span>`;
+      }).join('');
+      historyHtml = `<div class="history-line">${items}</div>`;
+    }
+
+    body.innerHTML = `
+      <h3>${escapeHtml(item.title)}</h3>
+      <p>显示作者：${escapeHtml(item.author)} · ${item.type === 'video' ? '视频' : (cnt > 1 ? cnt + ' 张图片' : '图片')} · ${(item.size/1024/1024).toFixed(2)} MB</p>
+      <p>上传于 ${new Date(item.createdAt).toLocaleString('zh-CN')} · 点赞 ${item.likeCount||0} · 收藏 ${item.collectCount||0}</p>
+      ${userTag}${catTag}${revTag}
+      ${item.description ? `<p style="margin-top:6px">文案：${escapeHtml(item.description)}</p>` : ''}
+      ${item.exif && item.exif.model ? `<p style="margin-top:6px;font-size:11.5px;color:var(--muted)">📷 ${escapeHtml([item.exif.make, item.exif.model].filter(Boolean).join(' '))}${item.exif.lens ? ' · ' + escapeHtml(item.exif.lens) : ''}</p>` : ''}
+      ${Array.isArray(item.tags) && item.tags.length ? `<div class="tag-list">${renderTagList(item.tags)}</div>` : ''}
+      ${item.status === 'rejected' && item.rejectReason ? `<div class="reject-line">拒绝原因：${escapeHtml(item.rejectReason)}</div>` : ''}
+      ${historyHtml}
+    `;
+
+    const actions = document.createElement('div'); actions.className = 'review-actions';
+
+    if (item.status === 'pending') {
+      const okBtn = document.createElement('button');
+      okBtn.className = 'btn-sm ok'; okBtn.textContent = '通过';
+      okBtn.addEventListener('click', () => reviewOne(item.id, 'approve'));
+      const noBtn = document.createElement('button');
+      noBtn.className = 'btn-sm no'; noBtn.textContent = '拒绝';
+      noBtn.addEventListener('click', () => openRejectModal([item.id], false));
+      actions.append(okBtn, noBtn);
+    } else if (item.status === 'approved') {
+      const noBtn = document.createElement('button');
+      noBtn.className = 'btn-sm no'; noBtn.textContent = '改为拒绝';
+      noBtn.addEventListener('click', () => openRejectModal([item.id], false));
+      actions.append(noBtn);
+    } else if (item.status === 'rejected') {
+      const okBtn = document.createElement('button');
+      okBtn.className = 'btn-sm ok'; okBtn.textContent = '改为通过';
+      okBtn.addEventListener('click', () => reviewOne(item.id, 'approve'));
+      actions.append(okBtn);
+    }
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-sm del'; delBtn.textContent = '删除';
+    delBtn.addEventListener('click', () => deleteOne(item));
+    actions.append(delBtn);
+
+    el.append(cb, thumb, body, actions);
+    return el;
+  }
+
+  async function deleteOne(item) {
+    if (!confirm(`确定要永久删除「${item.title}」吗？\n作品和原图都会删除，无法恢复。`)) return;
+    try {
+      const res = await api('/api/admin/delete', {
+        method: 'POST',
+        body: JSON.stringify({ id: item.id })
+      });
+      if (res.status === 401) { showLogin(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '删除失败');
+      selectedIds.delete(item.id);
+      await loadList();
+    } catch (e) { alert('删除失败：' + e.message); }
+  }
+
+  async function reviewOne(id, action, reason = '') {
+    try {
+      const res = await api('/api/admin/review', {
+        method: 'POST',
+        body: JSON.stringify({ id, action, rejectReason: reason })
+      });
+      if (res.status === 401) { showLogin(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '操作失败');
+      selectedIds.delete(id);
+      await loadList();
+    } catch (e) { alert('操作失败：' + e.message); }
+  }
+
+  function updateBatchBar() {
+    const bar = $('#batchBar');
+    const count = selectedIds.size;
+    $('#batchCount').textContent = count;
+    $('#batchApprove').disabled = count === 0;
+    $('#batchReject').disabled = count === 0;
+    bar.hidden = currentItems.length === 0;
+  }
+
+  $('#batchApprove').addEventListener('click', async () => {
+    if (!selectedIds.size) return;
+    if (!confirm(`确认批量通过 ${selectedIds.size} 件作品？`)) return;
+    const btn = $('#batchApprove');
+    btn.disabled = true;
+    try {
+      const res = await api('/api/admin/batch-review', {
+        method: 'POST',
+        body: JSON.stringify({ ids: [...selectedIds], action: 'approve' })
+      });
+      if (res.status === 401) { showLogin(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '操作失败');
+      selectedIds.clear();
+      await loadList();
+    } catch (e) { alert('操作失败：' + e.message); btn.disabled = false; }
+  });
+
+  $('#batchReject').addEventListener('click', () => {
+    if (!selectedIds.size) return;
+    openRejectModal([...selectedIds], true);
+  });
+
+  $('#batchClear').addEventListener('click', () => {
+    selectedIds.clear();
+    renderList();
+  });
+
+  function openRejectModal(ids, isBatch) {
+    pendingRejectIds = ids;
+    isBatchReject = isBatch;
+    $('#rejectTitle').textContent = isBatch ? `批量拒绝 ${ids.length} 件作品` : '拒绝该作品';
+    $('#rejectSub').textContent = isBatch
+      ? '请填写拒绝原因，所有被拒绝作品的上传者都会看到这个原因。'
+      : '请填写拒绝原因，上传者可在「我的投稿」中看到这个原因。';
+    $('#rejectReason').value = '';
+    $('#rejectErr').textContent = '';
+    $('#rejectModal').hidden = false;
+  }
+
+  function closeRejectModal() { $('#rejectModal').hidden = true; pendingRejectIds = []; }
+  $('#rejectModal').querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeRejectModal));
+  $('#rejectCancel').addEventListener('click', closeRejectModal);
+
+  $('#rejectConfirm').addEventListener('click', async () => {
+    const reason = $('#rejectReason').value.trim();
+    if (!reason) { $('#rejectErr').textContent = '请填写拒绝原因'; return; }
+    const btn = $('#rejectConfirm');
+    btn.disabled = true; btn.textContent = '处理中…';
+    try {
+      let res, data;
+      if (isBatchReject) {
+        res = await api('/api/admin/batch-review', {
+          method: 'POST',
+          body: JSON.stringify({ ids: pendingRejectIds, action: 'reject', rejectReason: reason })
+        });
+        data = await res.json();
+      } else {
+        res = await api('/api/admin/review', {
+          method: 'POST',
+          body: JSON.stringify({ id: pendingRejectIds[0], action: 'reject', rejectReason: reason })
+        });
+        data = await res.json();
+      }
+      if (res.status === 401) { showLogin(); return; }
+      if (!res.ok) throw new Error(data.error || '操作失败');
+      closeRejectModal();
+      pendingRejectIds.forEach(id => selectedIds.delete(id));
+      await loadList();
+    } catch (e) { $('#rejectErr').textContent = e.message; }
+    finally { btn.disabled = false; btn.textContent = '确认拒绝'; }
+  });
+
+  if (token) showDash(); else showLogin();
+})();
+</script>
+</body>
+</html>
