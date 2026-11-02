@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>光影集 · 摄影作品画廊</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<header class="topbar">
+  <a class="brand" href="/">光<span>影</span>集</a>
+  <nav class="nav">
+    <a href="#gallery">画廊</a>
+    <a href="javascript:;" id="navMy" hidden>我的投稿</a>
+    <a href="javascript:;" id="navCollected" hidden>我的收藏</a>
+    <a href="javascript:;" id="navHistory" hidden>浏览历史</a>
+    <a href="/admin">管理</a>
+    <span id="guestArea">
+      <button class="btn ghost" id="btnLogin">登录 / 注册</button>
+    </span>
+    <span id="authArea" hidden>
+      <button class="btn ghost notif-btn" id="btnNotif" title="通知">
+        🔔<span class="notif-badge" id="notifBadge" hidden>0</span>
+      </button>
+      <span id="usernameText" style="font-size:13px;color:var(--accent-2);margin:0 4px 0 12px"></span>
+      <button class="btn ghost" id="btnLogout">退出</button>
+    </span>
+    <button class="btn primary" id="btnUploadPhoto">📷 上传照片</button>
+    <button class="btn ghost" id="btnUploadVideo">🎬 上传视频</button>
+  </nav>
+</header>
+
+<section class="hero">
+  <p class="eyebrow">PHOTOGRAPHY</p>
+  <h1>光影之间，皆是故事</h1>
+  <p class="sub">上传你的摄影作品，经审核后在此陈列</p>
+  <div class="hero-actions">
+    <button class="btn primary" id="btnUploadPhoto2">📷 上传照片</button>
+    <button class="btn ghost" id="btnUploadVideo2">🎬 上传视频</button>
+    <button class="btn ghost" id="btnMy2" hidden>我的投稿</button>
+    <button class="btn ghost" id="btnCollected2" hidden>我的收藏</button>
+  </div>
+</section>
+
+<main class="wrap" id="gallery">
+  <div class="search-row">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="searchInput" placeholder="搜索标题、描述、作者、话题、题材…（空格分隔多个关键词）" autocomplete="off">
+      <button class="search-clear" id="searchClear" hidden aria-label="清空">×</button>
+    </div>
+    <div class="sort-wrap">
+      <select id="sortSelect">
+        <option value="new">最新上传</option>
+        <option value="hot">最热</option>
+        <option value="random">随机</option>
+      </select>
+    </div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="hot-tags-wrap" id="hotTagsWrap" hidden>
+    <span class="hot-label">🔥 热门话题</span>
+    <div class="hot-tags" id="hotTags"></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="filters">
+      <div class="tabs" id="typeTabs">
+        <button class="tab active" data-type="all">全部</button>
+        <button class="tab" data-type="image">图片</button>
+        <button class="tab" data-type="video">视频</button>
+      </div>
+      <div class="cat-tabs" id="catTabs">
+        <button class="cat-chip active" data-cat="all">全部题材</button>
+        <button class="cat-chip" data-cat="landscape">风光</button>
+        <button class="cat-chip" data-cat="portrait">人像</button>
+        <button class="cat-chip" data-cat="street">街拍</button>
+        <button class="cat-chip" data-cat="still">静物</button>
+        <button class="cat-chip" data-cat="animal">动物</button>
+        <button class="cat-chip" data-cat="architecture">建筑</button>
+        <button class="cat-chip" data-cat="documentary">纪实</button>
+        <button class="cat-chip" data-cat="other">其他</button>
+      </div>
+      <div class="cat-hint" id="catHint" hidden>多选时仅显示同时包含所选题材的作品</div>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="state" id="emptyState" hidden>
+    <div class="state-icon">◌</div>
+    <p id="emptyText">还没有作品</p>
+    <div class="hero-actions" style="justify-content:center">
+      <button class="btn primary" id="btnUploadPhoto3">📷 上传照片</button>
+      <button class="btn ghost" id="btnUploadVideo3">🎬 上传视频</button>
+    </div>
+  </div>
+
+  <div class="more-wrap">
+    <button class="btn ghost" id="loadMore" hidden>加载更多</button>
+  </div>
+</main>
+
+<footer class="foot">
+  <span>© 光影集 · 用光影记录时间</span>
+  <a href="/admin">作品管理</a>
+</footer>
+
+<!-- 上传照片弹窗 -->
+<div class="modal" id="photoModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2>📷 上传照片</h2>
+    <p class="sub">支持 JPG / PNG / WEBP / GIF / AVIF / BMP / TIFF / HEIC / HEIF。最多 9 张，单张最大 300MB，总量不超过 500MB。全站上传总容量 30GB。</p>
+    <form id="photoForm" novalidate>
+      <div class="drop">
+        <input type="file" name="files" accept="image/*" multiple hidden>
+        <div class="drop-inner">
+          <div class="drop-icon">↑</div>
+          <p><b>点击选择</b> 或拖拽照片到此处</p>
+          <span>仅限图片文件，最多 9 张</span>
+        </div>
+        <div class="preview-list" hidden></div>
+      </div>
+      <div class="field">
+        <label>标题</label>
+        <input name="title" data-max="80" maxlength="80" required placeholder="例：晨雾中的山脊">
+        <div class="char-count">0 / 80</div>
+      </div>
+      <div class="field">
+        <label>作者</label>
+        <input name="author" data-max="40" maxlength="40" required placeholder="显示在作品上的名字">
+        <div class="char-count">0 / 40</div>
+      </div>
+      <div class="field">
+        <label>题材分类 <span class="opt">可多选</span></label>
+        <div class="cat-picker">
+          <label class="cat-opt"><input type="checkbox" value="landscape"><span>风光</span></label>
+          <label class="cat-opt"><input type="checkbox" value="portrait"><span>人像</span></label>
+          <label class="cat-opt"><input type="checkbox" value="street"><span>街拍</span></label>
+          <label class="cat-opt"><input type="checkbox" value="still"><span>静物</span></label>
+          <label class="cat-opt"><input type="checkbox" value="animal"><span>动物</span></label>
+          <label class="cat-opt"><input type="checkbox" value="architecture"><span>建筑</span></label>
+          <label class="cat-opt"><input type="checkbox" value="documentary"><span>纪实</span></label>
+          <label class="cat-opt"><input type="checkbox" value="other"><span>其他</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>文案 / 描述 <span class="opt">可选</span></label>
+        <textarea name="description" data-max="500" maxlength="500" rows="3" placeholder="写点关于这组照片的故事……"></textarea>
+        <div class="char-count">0 / 500</div>
+      </div>
+      <div class="field">
+        <label>话题 <span class="opt">可选，空格或逗号分隔，最多 10 个</span></label>
+        <input name="tags" data-max="200" maxlength="200" placeholder="例：日出 云海 山 慢门">
+        <div class="char-count">0 / 200</div>
+        <div class="tag-preview"></div>
+      </div>
+      <p class="warn">⚠ 提交后作品<b>不可修改、不可删除</b>，需通过审核后才会展示。被拒绝的作品可在「我的投稿」中重新编辑提交。</p>
+      <div class="progress" hidden><div class="bar"></div><span class="pct">0%</span></div>
+      <div class="msg"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close>取消</button>
+        <button type="submit" class="btn primary submit-btn">提交审核</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 上传视频弹窗 -->
+<div class="modal" id="videoModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2>🎬 上传视频</h2>
+    <p class="sub">支持 MP4 / WEBM / MOV / M4V / MKV / AVI / OGV / 3GP，单文件最大 300MB。视频作品只支持单个文件。</p>
+    <form id="videoForm" novalidate>
+      <div class="drop">
+        <input type="file" name="files" accept="video/*" hidden>
+        <div class="drop-inner">
+          <div class="drop-icon">↑</div>
+          <p><b>点击选择</b> 或拖拽视频到此处</p>
+          <span>仅限视频文件</span>
+        </div>
+        <div class="preview-list" hidden></div>
+      </div>
+      <div class="field">
+        <label>标题</label>
+        <input name="title" data-max="80" maxlength="80" required placeholder="例：海浪慢动作">
+        <div class="char-count">0 / 80</div>
+      </div>
+      <div class="field">
+        <label>作者</label>
+        <input name="author" data-max="40" maxlength="40" required placeholder="显示在作品上的名字">
+        <div class="char-count">0 / 40</div>
+      </div>
+      <div class="field">
+        <label>题材分类 <span class="opt">可多选</span></label>
+        <div class="cat-picker">
+          <label class="cat-opt"><input type="checkbox" value="landscape"><span>风光</span></label>
+          <label class="cat-opt"><input type="checkbox" value="portrait"><span>人像</span></label>
+          <label class="cat-opt"><input type="checkbox" value="street"><span>街拍</span></label>
+          <label class="cat-opt"><input type="checkbox" value="still"><span>静物</span></label>
+          <label class="cat-opt"><input type="checkbox" value="animal"><span>动物</span></label>
+          <label class="cat-opt"><input type="checkbox" value="architecture"><span>建筑</span></label>
+          <label class="cat-opt"><input type="checkbox" value="documentary"><span>纪实</span></label>
+          <label class="cat-opt"><input type="checkbox" value="other"><span>其他</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>文案 / 描述 <span class="opt">可选</span></label>
+        <textarea name="description" data-max="500" maxlength="500" rows="3" placeholder="写点关于这段视频的故事……"></textarea>
+        <div class="char-count">0 / 500</div>
+      </div>
+      <div class="field">
+        <label>话题 <span class="opt">可选，空格或逗号分隔，最多 10 个</span></label>
+        <input name="tags" data-max="200" maxlength="200" placeholder="例：海 慢动作 海浪">
+        <div class="char-count">0 / 200</div>
+        <div class="tag-preview"></div>
+      </div>
+      <p class="warn">⚠ 提交后作品<b>不可修改、不可删除</b>，需通过审核后才会展示。被拒绝的作品可在「我的投稿」中重新编辑提交。</p>
+      <div class="progress" hidden><div class="bar"></div><span class="pct">0%</span></div>
+      <div class="msg"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close>取消</button>
+        <button type="submit" class="btn primary submit-btn">提交审核</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 登录 / 注册弹窗 -->
+<div class="modal" id="authModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:420px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2 id="authTitle">登录</h2>
+    <p class="sub" id="authSub">登录后可上传作品、查看审核结果</p>
+    <div class="tabs" id="authTabs" style="margin-bottom:20px;display:inline-flex">
+      <button class="tab active" data-mode="login">登录</button>
+      <button class="tab" data-mode="register">注册新账号</button>
+    </div>
+    <form id="authForm" novalidate>
+      <div class="field"><label>用户名</label><input name="username" maxlength="20" required autocomplete="username" placeholder="2-20 位字母、数字、下划线或中文"></div>
+      <div class="field"><label>密码</label><input name="password" type="password" maxlength="64" required autocomplete="current-password" placeholder="至少 6 位"></div>
+      <p class="msg err" id="authMsg"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close>取消</button>
+        <button type="submit" class="btn primary" id="authSubmit">登录</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 我的投稿 -->
+<div class="modal" id="myModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:680px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2>我的投稿</h2>
+    <p class="sub">你的所有上传作品及审核状态，被拒绝的作品会显示原因。</p>
+    <div class="tabs" id="myTabs" style="margin-bottom:16px;display:inline-flex">
+      <button class="tab active" data-status="all">全部</button>
+      <button class="tab" data-status="pending">待审核</button>
+      <button class="tab" data-status="approved">已通过</button>
+      <button class="tab" data-status="rejected">已拒绝</button>
+    </div>
+    <div id="myList"></div>
+  </div>
+</div>
+
+<!-- 我的收藏 -->
+<div class="modal" id="collectedModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:680px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2>我的收藏</h2>
+    <p class="sub">你收藏的所有已通过审核的作品。</p>
+    <div id="collectedList"></div>
+  </div>
+</div>
+
+<!-- 浏览历史 -->
+<div class="modal" id="historyModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:680px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2>浏览历史</h2>
+    <p class="sub">你看过的作品，最新在前，最多 200 条。</p>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<!-- 通知中心 -->
+<div class="modal" id="notifModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:560px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2>通知</h2>
+    <p class="sub">你的作品审核结果会出现在这里。</p>
+    <div id="notifList"></div>
+  </div>
+</div>
+
+<!-- 重新编辑被拒作品 -->
+<div class="modal" id="editModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:520px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2>重新编辑投稿</h2>
+    <p class="sub">只能修改文案信息，文件无法更换。提交后重新进入审核。</p>
+    <div id="editFileInfo"></div>
+    <form id="editForm" novalidate>
+      <div class="field"><label>标题</label><input name="title" maxlength="80" required></div>
+      <div class="field">
+        <label>题材分类 <span class="opt">可多选</span></label>
+        <div class="cat-picker">
+          <label class="cat-opt"><input type="checkbox" value="landscape"><span>风光</span></label>
+          <label class="cat-opt"><input type="checkbox" value="portrait"><span>人像</span></label>
+          <label class="cat-opt"><input type="checkbox" value="street"><span>街拍</span></label>
+          <label class="cat-opt"><input type="checkbox" value="still"><span>静物</span></label>
+          <label class="cat-opt"><input type="checkbox" value="animal"><span>动物</span></label>
+          <label class="cat-opt"><input type="checkbox" value="architecture"><span>建筑</span></label>
+          <label class="cat-opt"><input type="checkbox" value="documentary"><span>纪实</span></label>
+          <label class="cat-opt"><input type="checkbox" value="other"><span>其他</span></label>
+        </div>
+      </div>
+      <div class="field"><label>文案 / 描述</label><textarea name="description" maxlength="500" rows="3"></textarea></div>
+      <div class="field"><label>话题</label><input name="tags" maxlength="200" placeholder="空格或逗号分隔"></div>
+      <p class="msg err" id="editMsg"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close>取消</button>
+        <button type="submit" class="btn primary" id="editSubmit">重新提交审核</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 作者主页 -->
+<div class="modal" id="authorModal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" style="max-width:680px">
+    <button class="modal-x" data-close aria-label="关闭">×</button>
+    <h2 id="authorName">作者</h2>
+    <p class="sub"><span id="authorCount"></span>该作者所有已通过的作品，点击可查看大图。</p>
+    <div id="authorList"></div>
+  </div>
+</div>
+
+<!-- 灯箱（支持多图轮播） -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-x" id="lbClose" aria-label="关闭">×</button>
+  <div class="lb-stage" id="lbStage"></div>
+  <button class="lb-nav lb-prev" id="lbPrev" hidden aria-label="上一张">‹</button>
+  <button class="lb-nav lb-next" id="lbNext" hidden aria-label="下一张">›</button>
+  <div class="lb-counter" id="lbCounter" hidden></div>
+  <div class="lb-thumbs" id="lbThumbs" hidden></div>
+  <div class="lb-info">
+    <h3 id="lbTitle"></h3>
+    <p class="lb-meta" id="lbMeta"></p>
+    <div id="lbTags" class="tag-list"></div>
+    <p class="lb-desc" id="lbDesc"></p>
+    <div class="lb-exif" id="lbExif" hidden></div>
+    <div class="lb-actions">
+      <button class="lb-btn" id="lbLike">♡ 点赞</button>
+      <button class="lb-btn" id="lbCollect">☆ 收藏</button>
+      <button class="lb-btn" id="lbDownload">⬇ 下载原图</button>
+      <button class="lb-btn" id="lbCopy">📋 复制信息</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
